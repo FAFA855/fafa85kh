@@ -22,11 +22,12 @@ function spinWheel() {
   if (spinning) return;
   spinning = true;
 
+  fbq('trackCustom', 'SpinAttempt'); // 🔥 Pixel event
+
   const spinButton = document.querySelector('.spin-button');
   spinButton.classList.add('hide-animation');
   spinButton.disabled = true;
 
-  // Fully hide after animation
   setTimeout(() => {
     spinButton.style.display = 'none';
   }, 500);
@@ -43,15 +44,10 @@ function spinWheel() {
   const spinSound = document.getElementById('spinSound');
   const modalSound = document.getElementById('modalSound');
 
-  // Play click sound
-  clickSound.currentTime = 0;
-  clickSound.play();
+  clickSound.currentTime = 0; clickSound.play();
 
-  // Reset wheel and pointer
-  wheel.style.transition = 'none';
-  wheel.style.transform = 'rotate(0deg)';
-  pointer.style.transition = 'none';
-  pointer.style.transform = 'rotate(0deg)';
+  wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
+  pointer.style.transition = 'none'; pointer.style.transform = 'rotate(0deg)';
 
   setTimeout(() => {
     const rotations = 10;
@@ -64,79 +60,58 @@ function spinWheel() {
     pointer.style.transition = 'transform 4s ease-out';
     pointer.style.transform = `rotate(${-totalDegrees}deg)`;
 
-    spinSound.currentTime = 0;
-    spinSound.play();
+    spinSound.currentTime = 0; spinSound.play();
 
     setTimeout(() => {
-      spinSound.pause();
-      spinSound.currentTime = 0;
+      spinSound.pause(); spinSound.currentTime = 0;
+      modalSound.currentTime = 0; modalSound.play();
 
       if (spinCount === 0) {
         retryModal.style.display = 'flex';
-        modalSound.currentTime = 0;
-        modalSound.play();
         spinCount++;
       } else {
         modal.style.display = 'flex';
-        modalSound.currentTime = 0;
-        modalSound.play();
+        fbq('trackCustom', 'SpinWin'); // 🔥 Pixel event
         spinCount = 0;
 
-        // 🎉 Confetti on win
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 },
-          zIndex: 2000
-        });
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, zIndex: 2000 });
       }
     }, 4000);
   }, 50);
 }
 
-// Reset for next spin
 function enableSpinAgain() {
   spinning = false;
   const spinButton = document.querySelector('.spin-button');
   spinButton.classList.remove('hide-animation');
-  spinButton.style.opacity = '1';
-  spinButton.style.transform = 'translateX(-50%) scale(1)';
   spinButton.style.display = 'block';
   spinButton.disabled = false;
 }
 
-// Close modals
-document.getElementById('winModal').addEventListener('click', function (e) {
-  if (e.target === this) {
-    this.style.display = 'none';
+document.getElementById('winModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) {
+    e.currentTarget.style.display = 'none';
     enableSpinAgain();
   }
 });
 
-document.getElementById('retryModal').addEventListener('click', function (e) {
-  if (e.target === this) {
-    this.style.display = 'none';
+document.getElementById('retryModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) {
+    e.currentTarget.style.display = 'none';
     enableSpinAgain();
   }
 });
 
-// Retry click
 function retrySpin() {
   reduceBackgroundMusicVolume();
   document.getElementById('retryModal').style.display = 'none';
   enableSpinAgain();
 }
 
-// Start music on first click
 document.addEventListener('click', startBackgroundMusic, { once: true });
 
-// Lower music when clicking key elements
-document.addEventListener('click', function (e) {
-  if (
-    e.target.tagName === 'BUTTON' ||
-    e.target.classList.contains('spin-button') ||
-    e.target.classList.contains('try_again_button')
-  ) {
+document.addEventListener('click', e => {
+  if (['BUTTON', 'IMG'].includes(e.target.tagName)) {
     reduceBackgroundMusicVolume();
   }
 });
